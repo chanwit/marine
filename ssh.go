@@ -1,8 +1,8 @@
 package marine
 
 import (
-	"strings"
 	"golang.org/x/crypto/ssh"
+	"strings"
 )
 
 func ConnectToHost(host string, pass string) (*ssh.Client, *ssh.Session, error) {

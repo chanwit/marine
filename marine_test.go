@@ -1,16 +1,18 @@
 package marine
 
 import (
-	"github.com/stretchr/testify/assert"
+	"bytes"
+	"os"
+	"strings"
 	"testing"
 
-	"bytes"
 	log "github.com/Sirupsen/logrus"
-	"strings"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestMe(t *testing.T) {
-	assert.NoError(t, Import("files/ubuntu-14.10-server-amd64.ova", 512))
+	log.Info("Start testing")
+	assert.NoError(t, Import(os.Getenv("GOPATH")+"/files/ubuntu-14.10-server-amd64.ova", 512))
 	assert.NoError(t, Clone("base", "box", 4, "vboxnet0"))
 	StartAndWait("box001", "52201")
 	defer func() {

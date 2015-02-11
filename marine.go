@@ -3,7 +3,6 @@ package marine
 import (
 	"fmt"
 	"net"
-	"os"
 	"os/exec"
 	"strings"
 	"time"
@@ -15,15 +14,16 @@ var VBOX_MANAGE = "VBoxManage"
 
 func Import(file string, memory int) error {
 	name := "base"
-	cmd := exec.Command(VBOX_MANAGE, "import", os.Getenv("PWD")+"/"+file,
+	cmd := exec.Command(VBOX_MANAGE, "import", file,
 		"--vsys", "0", "--vmname", name,
 		"--memory", fmt.Sprintf("%d", memory),
 	)
-	_, err := cmd.Output()
+	out, err := cmd.Output()
 	if err == nil {
 		log.Infof("Imported \"%s\"", name)
 	}
 	if err != nil {
+		log.Errorf("Error: %s\n%s", err, string(out))
 		return err
 	}
 
@@ -108,7 +108,7 @@ func Stop(name string) error {
 		if st == "poweroff" {
 			log.Infof("VM \"%s\" is now %s", name, st)
 			break
-		} else if st == "error"	{
+		} else if st == "error" {
 			return fmt.Errorf("GetState: %s", st)
 		}
 		time.Sleep(1 * time.Second)
@@ -126,8 +126,8 @@ func GetState(name string) string {
 	lines := strings.Split(str, "\n")
 	for _, line := range lines {
 		if strings.HasPrefix(line, "VMState=") {
-			v:= strings.Split(line, "=")[1]
-			return v[1:len(v)-1]
+			v := strings.Split(line, "=")[1]
+			return v[1 : len(v)-1]
 		}
 	}
 	return "unknown error"
