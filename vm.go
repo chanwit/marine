@@ -47,7 +47,7 @@ func (m *Machine) StartAndWait() error {
 	if port == "" {
 		return fmt.Errorf("Cannot find port: %s", m.Name)
 	}
-
+	log.Infof("Found %s = %s", m.Name, m.ForwardingPort)
 	return StartAndWait(m.Name, m.ForwardingPort)
 }
 
