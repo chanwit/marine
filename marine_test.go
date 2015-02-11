@@ -10,9 +10,10 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestMe(t *testing.T) {
+func TestSudo(t *testing.T) {
 	log.Info("Start testing")
-	assert.NoError(t, Import(os.Getenv("GOPATH")+"/files/ubuntu-14.10-server-amd64.ova", 512))
+	_, err := Import(os.Getenv("GOPATH")+"/files/ubuntu-14.10-server-amd64.ova", 512)
+	assert.NoError(t, err)
 	assert.NoError(t, Clone("base", "box", 4, "vboxnet0"))
 	StartAndWait("box001", "52201")
 	defer func() {
@@ -32,4 +33,22 @@ func TestMe(t *testing.T) {
 	whoami := strings.TrimSpace(b.String())
 	assert.Equal(t, "root", whoami)
 	log.Infof("whoami: %s", whoami)
+}
+
+func TestNewAPIs(t *testing.T) {
+	base, err := Import(os.Getenv("GOPATH")+"/files/ubuntu-14.10-server-amd64.ova", 512)
+	assert.NoError(t, err)
+	boxes, err := base.Clone(4, "box")
+	assert.NoError(t, err)
+	boxes[0].StartAndWait()
+	if out, err := boxes[0].Run("/usr/bin/whoami"); err == nil {
+		assert.Equal(t, "ubuntu", strings.TrimSpace(string(out)))
+	}
+	if out, err := boxes[0].Sudo("whoami"); err == nil {
+		assert.Equal(t, "root", strings.TrimSpace(out))
+	}
+	for _, box := range boxes {
+		assert.NoError(t, box.Remove())
+	}
+	assert.NoError(t, base.Remove())
 }

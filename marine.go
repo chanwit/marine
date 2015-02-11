@@ -12,7 +12,7 @@ import (
 
 var VBOX_MANAGE = "VBoxManage"
 
-func Import(file string, memory int) error {
+func Import(file string, memory int) (*Machine, error) {
 	name := "base"
 	cmd := exec.Command(VBOX_MANAGE, "import", file,
 		"--vsys", "0", "--vmname", name,
@@ -24,12 +24,12 @@ func Import(file string, memory int) error {
 	}
 	if err != nil {
 		log.Errorf("Error: %s\n%s", err, string(out))
-		return err
+		return nil, err
 	}
 
 	_, err = exec.Command(VBOX_MANAGE, "snapshot", "base", "take", "origin").Output()
 	log.Info("Snapshot \"origin\" taken")
-	return err
+	return &Machine{Name: "base"}, err
 }
 
 func Modify(name string, adapter string, i int) error {
