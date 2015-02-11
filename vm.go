@@ -60,7 +60,6 @@ func (m *Machine) Run(cmd string) (string, error) {
 
 	var b bytes.Buffer
 	sess.Stdout = &b
-	// "/bin/bash -c 'echo reverse | sudo -S whoami'"
 	if err := sess.Run(cmd); err != nil {
 		return "", err
 	}
@@ -69,10 +68,15 @@ func (m *Machine) Run(cmd string) (string, error) {
 }
 
 func (m *Machine) Sudo(cmd string) (string, error) {
+	// "/bin/bash -c 'echo reverse | sudo -S whoami'"
 	sudo := fmt.Sprintf("/bin/bash -c 'echo reverse | sudo -S %s'", cmd)
 	return m.Run(sudo)
 }
 
 func (m *Machine) Remove() error {
 	return Remove(m.Name)
+}
+
+func (m *Machine) Stop() error {
+	return Stop(m.Name)
 }

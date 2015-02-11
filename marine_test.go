@@ -11,6 +11,7 @@ import (
 )
 
 func TestSudo(t *testing.T) {
+	t.Skip()
 	log.Info("Start testing")
 	_, err := Import(os.Getenv("GOPATH")+"/files/ubuntu-14.10-server-amd64.ova", 512)
 	assert.NoError(t, err)
@@ -36,10 +37,20 @@ func TestSudo(t *testing.T) {
 }
 
 func TestNewAPIs(t *testing.T) {
+	log.Info("Start testing")
 	base, err := Import(os.Getenv("GOPATH")+"/files/ubuntu-14.10-server-amd64.ova", 512)
 	assert.NoError(t, err)
 	boxes, err := base.Clone(4, "box")
 	assert.NoError(t, err)
+
+	defer func() {
+		boxes[0].Stop()
+		for _, box := range boxes {
+			assert.NoError(t, box.Remove())
+		}
+		assert.NoError(t, base.Remove())
+	}()
+
 	boxes[0].StartAndWait()
 	if out, err := boxes[0].Run("/usr/bin/whoami"); err == nil {
 		assert.Equal(t, "ubuntu", strings.TrimSpace(string(out)))
@@ -47,8 +58,4 @@ func TestNewAPIs(t *testing.T) {
 	if out, err := boxes[0].Sudo("whoami"); err == nil {
 		assert.Equal(t, "root", strings.TrimSpace(out))
 	}
-	for _, box := range boxes {
-		assert.NoError(t, box.Remove())
-	}
-	assert.NoError(t, base.Remove())
 }
