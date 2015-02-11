@@ -6,12 +6,15 @@ import (
 	"os/exec"
 	"regexp"
 	"strings"
+
+	log "github.com/Sirupsen/logrus"
 )
 
 type Machine struct {
 	Name           string
 	ID             string
 	ForwardingPort string
+	IPAddr         string
 }
 
 func (m *Machine) Clone(num int, prefix string) ([]*Machine, error) {
@@ -32,7 +35,8 @@ func (m *Machine) StartAndWait() error {
 	if err != nil {
 		return fmt.Errorf("Cannot get vminfo %s", m.Name)
 	}
-	port := ""
+	log.Debugf("Found info : %d length", len(out))
+	m.ForwardingPort = ""
 	lines := strings.Split(string(out), "\n")
 	for _, line := range lines {
 		if strings.HasPrefix(line, "Forwarding") {
@@ -44,14 +48,15 @@ func (m *Machine) StartAndWait() error {
 			}
 		}
 	}
-	if port == "" {
+	if m.ForwardingPort == "" {
 		return fmt.Errorf("Cannot find port: %s", m.Name)
 	}
-	log.Infof("Found %s = %s", m.Name, m.ForwardingPort)
+	log.Debugf("Found %s = %s", m.Name, m.ForwardingPort)
 	return StartAndWait(m.Name, m.ForwardingPort)
 }
 
 func (m *Machine) Run(cmd string) (string, error) {
+	log.Infof("Running command: %s", cmd)
 	_, sess, err := ConnectToHost("ubuntu@127.0.0.1:"+m.ForwardingPort, "reverse")
 	defer sess.Close()
 	if err != nil {
@@ -63,7 +68,7 @@ func (m *Machine) Run(cmd string) (string, error) {
 	if err := sess.Run(cmd); err != nil {
 		return "", err
 	}
-
+	log.Infof("Command done: %s", cmd)
 	return b.String(), nil
 }
 
@@ -71,6 +76,46 @@ func (m *Machine) Sudo(cmd string) (string, error) {
 	// "/bin/bash -c 'echo reverse | sudo -S whoami'"
 	sudo := fmt.Sprintf("/bin/bash -c 'echo reverse | sudo -S %s'", cmd)
 	return m.Run(sudo)
+}
+
+func (m *Machine) SetupIPAddr() error {
+	_, err := m.Sudo(`sed -i "\$aauto eth1\niface eth1 inet dhcp\n" /etc/network/interfaces`)
+	if err != nil {
+		return fmt.Errorf("Cannot sed: %s:", err)
+	}
+
+	_, err = m.Sudo("ifup eth1")
+	if err != nil {
+		return fmt.Errorf("Cannot ifup: %s:", err)
+	}
+
+	return nil
+}
+
+/*
+3: eth1: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc pfifo_fast state UP group default qlen 1000
+    link/ether 08:00:27:c7:d6:16 brd ff:ff:ff:ff:ff:ff
+    inet 192.168.99.107/24 brd 192.168.99.255 scope global eth1
+       valid_lft forever preferred_lft forever
+    inet6 fe80::a00:27ff:fec7:d616/64 scope link
+       valid_lft forever preferred_lft forever
+*/
+func (m *Machine) GetIPAddr() (string, error) {
+	if out, err := m.Run("/sbin/ip addr show dev eth1"); err == nil {
+		str := string(out)
+		lines := strings.Split(str, "\n")
+		for _, line := range lines {
+			line := strings.TrimSpace(line)
+			if strings.HasPrefix(line, "inet") {
+				result := strings.Split(line, " ")
+				ip := strings.SplitN(result[1], "/", 2)[0]
+				m.IPAddr = ip
+				return ip, nil
+			}
+		}
+	}
+
+	return "", fmt.Errorf("No IP: ", m.Name)
 }
 
 func (m *Machine) Remove() error {
