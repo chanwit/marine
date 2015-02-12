@@ -36,6 +36,8 @@ func Import(file string, memory int, installs ...string) (*Machine, error) {
 			switch i {
 			case "docker":
 				m.InstallDocker()
+			case "golang":
+				m.InstallGolang()
 			}
 		}
 	}

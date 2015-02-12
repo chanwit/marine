@@ -58,8 +58,12 @@ func (m *Machine) StartAndWait() error {
 	return StartAndWait(m.Name, m.ForwardingPort)
 }
 
-func (m *Machine) Run(cmd string) (string, error) {
-	log.Infof("Running command: %s", cmd)
+func (m *Machine) Run(cmd string, raw ...string) (string, error) {
+	if len(raw) == 0 {
+		log.Infof("Running: \"%s\"", cmd)
+	} else {
+		log.Infof(raw[0], raw[1])
+	}
 	_, sess, err := ConnectToHost("ubuntu@127.0.0.1:"+m.ForwardingPort, "reverse")
 	defer sess.Close()
 	if err != nil {
@@ -75,8 +79,8 @@ func (m *Machine) Run(cmd string) (string, error) {
 
 func (m *Machine) Sudo(cmd string) (string, error) {
 	// "/bin/bash -c 'echo reverse | sudo -S whoami'"
-	sudo := fmt.Sprintf("/bin/bash -c 'echo reverse | sudo -S %s'", cmd)
-	return m.Run(sudo)
+	sudo := fmt.Sprintf("/bin/bash -c 'echo reverse | sudo -S bash -c \"%s\"'", cmd)
+	return m.Run(sudo, "Sudo: \"%s\"", cmd)
 }
 
 func (m *Machine) SetupIPAddr() error {
@@ -128,6 +132,16 @@ func (m *Machine) Stop() error {
 }
 
 func (m *Machine) InstallDocker() error {
-	_, err := m.Sudo(`bash -c "wget -qO- --no-check-certificate https://get.docker.com/ | bash"`)
+	_, err := m.Sudo("wget -qO- --no-check-certificate https://get.docker.com/ | bash")
 	return err
+}
+
+func (m *Machine) InstallGolang() error {
+	_, err := m.Sudo("service docker start")
+	_, err = m.Sudo("docker pull golang:1.3")
+	return err
+}
+
+func (m *Machine) Exist() bool {
+	return false
 }

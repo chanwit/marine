@@ -116,10 +116,38 @@ func TestGettingIP(t *testing.T) {
 	assert.Equal(t, true, strings.HasPrefix(ip, "192.168.99."))
 }
 
+func prepareBoxWithDocker() *Machine {
+	base, _ := Import(os.Getenv("GOPATH")+"/files/ubuntu-14.10-server-amd64.ova", 512,
+		"docker",
+		"golang")
+	return base
+}
+
 func TestInstallDocker(t *testing.T) {
+	t.Skip()
 	log.Info("Start testing")
-	// base, err := Import(os.Getenv("GOPATH")+"/files/ubuntu-14.10-server-amd64.ova", 512, "docker")
-	// assert.NoError(t, err)
+	base := &Machine{Name: "base"}
+	if !base.Exist() {
+		base = prepareBoxWithDocker()
+	}
+	boxes, err := base.Clone(1, "box")
+	assert.NoError(t, err)
+
+	defer func() {
+		boxes[0].Stop()
+		boxes[0].Remove()
+	}()
+
+	boxes[0].StartAndWait()
+	out, err := boxes[0].Sudo("docker version")
+	if err != nil {
+		log.Error(err)
+	}
+	log.Info(out)
+}
+
+func TestRunningSwarm(t *testing.T) {
+	t.Skip()
 	base := &Machine{Name: "base"}
 	boxes, err := base.Clone(1, "box")
 	assert.NoError(t, err)
@@ -130,9 +158,29 @@ func TestInstallDocker(t *testing.T) {
 	}()
 
 	boxes[0].StartAndWait()
-	out, err := boxes[0].Sudo(`bash -c "docker version"`)
-	if err != nil {
-		log.Error(err)
-	}
+	out, err := boxes[0].Sudo("docker run --rm swarm create")
+	assert.NoError(t, err)
+	hash := strings.TrimSpace(out)
+	log.Info(hash)
+	assert.Equal(t, 32, len(hash))
+}
+
+func TestCompilingSwarm(t *testing.T) {
+	base := &Machine{Name: "base"}
+	boxes, err := base.Clone(1, "box")
+	assert.NoError(t, err)
+
+	defer func() {
+		boxes[0].Stop()
+		boxes[0].Remove()
+	}()
+
+	boxes[0].StartAndWait()
+	out, err := boxes[0].Sudo("git clone --depth 1 http://github.com/docker/swarm")
+	out, err = boxes[0].Sudo("cd swarm && docker build -t swarm-build .")
+	assert.NoError(t, err)
+
+	out, err = boxes[0].Sudo("docker run --rm=true -t swarm-build")
+	assert.NoError(t, err)
 	log.Info(out)
 }
