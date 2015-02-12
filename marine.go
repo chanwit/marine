@@ -85,7 +85,7 @@ func Remove(args ...string) error {
 }
 
 func StartAndWait(name string, port string) error {
-	err := exec.Command(VBOX_MANAGE, "startvm", name).Run()
+	err := exec.Command(VBOX_MANAGE, "startvm", name, "--type", "headless").Run()
 	log.Infof("Started \"%s\"", name)
 	if err != nil {
 		return err
