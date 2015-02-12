@@ -1,7 +1,6 @@
 package marine
 
 import (
-	"bytes"
 	"fmt"
 	"os/exec"
 	"regexp"
@@ -31,6 +30,10 @@ func (m *Machine) Clone(num int, prefix string) ([]*Machine, error) {
 }
 
 func (m *Machine) StartAndWait() error {
+	if m.ForwardingPort != "" {
+		return StartAndWait(m.Name, m.ForwardingPort)
+	}
+
 	out, err := exec.Command(VBOX_MANAGE, "showvminfo", m.Name, "--machinereadable").Output()
 	if err != nil {
 		return fmt.Errorf("Cannot get vminfo %s", m.Name)
@@ -63,13 +66,11 @@ func (m *Machine) Run(cmd string) (string, error) {
 		return "", err
 	}
 
-	var b bytes.Buffer
-	sess.Stdout = &b
-	if err := sess.Run(cmd); err != nil {
+	b, err := sess.Output(cmd)
+	if err != nil {
 		return "", err
 	}
-	log.Infof("Command done: %s", cmd)
-	return b.String(), nil
+	return string(b), nil
 }
 
 func (m *Machine) Sudo(cmd string) (string, error) {
@@ -124,4 +125,9 @@ func (m *Machine) Remove() error {
 
 func (m *Machine) Stop() error {
 	return Stop(m.Name)
+}
+
+func (m *Machine) InstallDocker() error {
+	_, err := m.Sudo(`bash -c "wget -qO- --no-check-certificate https://get.docker.com/ | bash"`)
+	return err
 }

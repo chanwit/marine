@@ -64,6 +64,7 @@ func TestNewAPIs(t *testing.T) {
 
 func TestListingIP(t *testing.T) {
 	t.Skip()
+
 	log.Info("Start testing")
 	base, err := Import(os.Getenv("GOPATH")+"/files/ubuntu-14.10-server-amd64.ova", 512)
 	assert.NoError(t, err)
@@ -94,6 +95,7 @@ func TestListingIP(t *testing.T) {
 }
 
 func TestGettingIP(t *testing.T) {
+	t.Skip()
 	log.Info("Start testing")
 	base, err := Import(os.Getenv("GOPATH")+"/files/ubuntu-14.10-server-amd64.ova", 512)
 	assert.NoError(t, err)
@@ -112,4 +114,25 @@ func TestGettingIP(t *testing.T) {
 	log.Infof("IP Address (eth1): %s", ip)
 	assert.NoError(t, err)
 	assert.Equal(t, true, strings.HasPrefix(ip, "192.168.99."))
+}
+
+func TestInstallDocker(t *testing.T) {
+	log.Info("Start testing")
+	// base, err := Import(os.Getenv("GOPATH")+"/files/ubuntu-14.10-server-amd64.ova", 512, "docker")
+	// assert.NoError(t, err)
+	base := &Machine{Name: "base"}
+	boxes, err := base.Clone(1, "box")
+	assert.NoError(t, err)
+
+	defer func() {
+		boxes[0].Stop()
+		boxes[0].Remove()
+	}()
+
+	boxes[0].StartAndWait()
+	out, err := boxes[0].Sudo(`bash -c "docker version"`)
+	if err != nil {
+		log.Error(err)
+	}
+	log.Info(out)
 }

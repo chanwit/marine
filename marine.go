@@ -12,7 +12,7 @@ import (
 
 var VBOX_MANAGE = "VBoxManage"
 
-func Import(file string, memory int) (*Machine, error) {
+func Import(file string, memory int, installs ...string) (*Machine, error) {
 	name := "base"
 	cmd := exec.Command(VBOX_MANAGE, "import", file,
 		"--vsys", "0", "--vmname", name,
@@ -27,13 +27,29 @@ func Import(file string, memory int) (*Machine, error) {
 		return nil, err
 	}
 
+	Modify(name, "vboxnet0", 0)
+
+	m := &Machine{Name: "base", ForwardingPort: "52200"}
+	m.StartAndWait()
+	if len(installs) > 0 {
+		for _, i := range installs {
+			switch i {
+			case "docker":
+				m.InstallDocker()
+			}
+		}
+	}
+	m.Stop()
 	_, err = exec.Command(VBOX_MANAGE, "snapshot", "base", "take", "origin").Output()
 	log.Info("Snapshot \"origin\" taken")
-	return &Machine{Name: "base"}, err
+	return m, err
 }
 
 func Modify(name string, adapter string, i int) error {
 	err := exec.Command(VBOX_MANAGE, "modifyvm", name,
+		"--natpf1", "delete", "ssh").Run()
+
+	err = exec.Command(VBOX_MANAGE, "modifyvm", name,
 		"--natpf1", fmt.Sprintf("ssh,tcp,127.0.0.1,%d,,22", 52200+i),
 		"--nic2", "hostonly",
 		"--hostonlyadapter2", adapter,
