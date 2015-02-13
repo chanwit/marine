@@ -176,11 +176,10 @@ func TestCompilingSwarm(t *testing.T) {
 	}()
 
 	boxes[0].StartAndWait()
-	out, err := boxes[0].Sudo("git clone --depth 1 http://github.com/docker/swarm")
-	out, err = boxes[0].Sudo("cd swarm && docker build -t swarm-build .")
+	err = boxes[0].BuildSwarm("chanwit/swarm", "plugin-system")
 	assert.NoError(t, err)
 
-	out, err = boxes[0].Sudo("docker run --rm=true -t swarm-build")
+	out, err := boxes[0].Sudo("docker run --rm -t swarm-build")
 	assert.NoError(t, err)
 	log.Info(out)
 }

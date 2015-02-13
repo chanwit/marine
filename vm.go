@@ -142,6 +142,25 @@ func (m *Machine) InstallGolang() error {
 	return err
 }
 
+func (m *Machine) BuildSwarm(repo string, commits ...string) error {
+	url := fmt.Sprintf("git clone --depth 1 http://github.com/%s", repo)
+	if len(commits) == 1 {
+		url = fmt.Sprintf("wget -qO- --no-check-certificate https://github.com/%s/archive/%s.tar.gz | tar zxf -", repo, commits[0])
+	}
+	out, err := m.Sudo(url)
+	if err != nil {
+		log.Error(out)
+		return err
+	}
+	_, err = m.Sudo("cd swarm* && sed -i \"s/git.rev-parse...short/echo/\" Dockerfile")
+	_, err = m.Sudo("cd swarm* && docker build -t swarm-build .")
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
 func (m *Machine) Exist() bool {
 	return false
 }
