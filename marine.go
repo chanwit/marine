@@ -42,7 +42,7 @@ func Import(file string, memory int, installs ...string) (*Machine, error) {
 		log.Infof("Imported \"%s\"", name)
 	}
 	if err != nil {
-		log.Errorf("Error: %s\n%s", err, string(out))
+		log.Errorf("Import: %s\n%s\n%s", err, string(out), cmd)
 		return nil, err
 	}
 
