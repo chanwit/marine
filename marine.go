@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net"
 	"os/exec"
+	"path"
 	"strings"
 	"time"
 
@@ -12,8 +13,26 @@ import (
 
 var VBOX_MANAGE = "VBoxManage"
 
+func Exist(name string) (bool, error) {
+	name = "\"" + name + "\""
+	cmd := exec.Command(VBOX_MANAGE, "list", "vms")
+	out, err := cmd.Output()
+	if err != nil {
+		return false, err
+	}
+	str := string(out)
+	lines := strings.Split(str, "\n")
+	for _, line := range lines {
+		if strings.HasPrefix(line, name) {
+			return true, nil
+		}
+	}
+	return false, nil
+}
+
 func Import(file string, memory int, installs ...string) (*Machine, error) {
-	name := "base"
+	basename := path.Base(file)
+	name := strings.SplitN(basename, "-", 2)[0]
 	cmd := exec.Command(VBOX_MANAGE, "import", file,
 		"--vsys", "0", "--vmname", name,
 		"--memory", fmt.Sprintf("%d", memory),
@@ -29,9 +48,9 @@ func Import(file string, memory int, installs ...string) (*Machine, error) {
 
 	Modify(name, "vboxnet0", 0)
 
-	m := &Machine{Name: "base", ForwardingPort: "52200"}
-	m.StartAndWait()
+	m := &Machine{Name: name, ForwardingPort: "52200"}
 	if len(installs) > 0 {
+		m.StartAndWait()
 		for _, i := range installs {
 			switch i {
 			case "docker":
@@ -40,10 +59,10 @@ func Import(file string, memory int, installs ...string) (*Machine, error) {
 				m.InstallGolang()
 			}
 		}
+		m.Stop()
 	}
-	m.Stop()
-	_, err = exec.Command(VBOX_MANAGE, "snapshot", "base", "take", "origin").Output()
-	log.Info("Snapshot \"origin\" taken")
+	_, err = exec.Command(VBOX_MANAGE, "snapshot", name, "take", "origin").Output()
+	log.Infof("Snapshot \"%s/origin\" taken", name)
 	return m, err
 }
 

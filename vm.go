@@ -16,7 +16,7 @@ type Machine struct {
 	IPAddr         string
 }
 
-func (m *Machine) Clone(num int, prefix string) ([]*Machine, error) {
+func (m *Machine) CloneN(num int, prefix string) ([]*Machine, error) {
 	err := Clone(m.Name, prefix, num, "vboxnet0")
 	if err != nil {
 		return nil, err
@@ -27,6 +27,11 @@ func (m *Machine) Clone(num int, prefix string) ([]*Machine, error) {
 		machines[i-1] = &Machine{Name: name}
 	}
 	return machines, nil
+}
+
+func (m *Machine) Clone(prefix string) (*Machine, error) {
+	box, err := m.CloneN(1, prefix)
+	return box[0], err
 }
 
 func (m *Machine) StartAndWait() error {
@@ -152,8 +157,10 @@ func (m *Machine) BuildSwarm(repo string, commits ...string) error {
 		log.Error(out)
 		return err
 	}
-	_, err = m.Sudo("cd swarm* && sed -i \"s/git.rev-parse...short/echo/\" Dockerfile")
-	_, err = m.Sudo("cd swarm* && docker build -t swarm-build .")
+	if len(commits) == 1 {
+		_, err = m.Sudo("cd swarm* && sed -i \"s/git.rev-parse...short/echo/\" Dockerfile")
+	}
+	_, err = m.Sudo("cd swarm* && docker build -t swarm:build .")
 	if err != nil {
 		return err
 	}
