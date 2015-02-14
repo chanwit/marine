@@ -18,6 +18,7 @@ func Exist(name string) (bool, error) {
 	cmd := exec.Command(VBOX_MANAGE, "list", "vms")
 	out, err := cmd.Output()
 	if err != nil {
+		log.Errorf("Exist: %s\n%s\n%s", err, string(out), cmd)
 		return false, err
 	}
 	str := string(out)
