@@ -31,6 +31,17 @@ func Exist(name string) (bool, error) {
 	return false, nil
 }
 
+func Export(name string, outfile string) error {
+	cmd := exec.Command(VBOX_MANAGE, "export", name,
+		"--output", outfile,
+		"--ovf20")
+	_, err := cmd.Output()
+	if err == nil {
+		log.Infof("Exported \"%s\" to %s", name, outfile)
+	}
+	return err
+}
+
 func Import(file string, memory int, installs ...string) (*Machine, error) {
 	basename := path.Base(file)
 	name := strings.SplitN(basename, "-", 2)[0]

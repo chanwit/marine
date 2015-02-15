@@ -18,6 +18,11 @@ func prepare(c *cli.Context) {
 	basename := path.Base(filename)
 	name := strings.SplitN(basename, "-", 2)[0]
 
+	outfile := c.String("out")
+	if outfile == "" {
+		outfile = name + ".ova"
+	}
+
 	force := c.Bool("force")
 
 	exist, err := marine.Exist(name)
@@ -30,6 +35,10 @@ func prepare(c *cli.Context) {
 			512,
 			"docker",
 			"golang")
+		err = marine.Export(name, outfile)
+		if err != nil {
+			log.Errorf("Export error: %s", err)
+		}
 	} else {
 		log.Infof("Image existed: %s", name)
 	}
@@ -43,6 +52,12 @@ var flImage = cli.StringFlag{
 var flForce = cli.BoolFlag{
 	Name:  "force, f",
 	Usage: "force action",
+}
+
+var flOutfile = cli.StringFlag {
+	Name: "out, o",
+	Usage: "output image file",
+	Value: "",
 }
 
 func main() {
@@ -61,7 +76,7 @@ func main() {
 			ShortName: "p",
 			Usage:     "prepare a base image",
 			Flags: []cli.Flag{
-				flImage, flForce,
+				flImage, flForce, flOutfile,
 			},
 			Action: prepare,
 		},
