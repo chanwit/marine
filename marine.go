@@ -64,7 +64,14 @@ func Import(file string, memory int, installs ...string) (*Machine, error) {
 		return nil, err
 	}
 
-	Modify(name, "vboxnet0", 0)
+	hostOnlyNetwork, err := getOrCreateHostOnlyNetwork(
+		net.ParseIP("192.168.99.1"),
+		net.IPv4Mask(255, 255, 255, 0),
+		net.ParseIP("192.168.99.2"),
+		net.ParseIP("192.168.99.100"),
+		net.ParseIP("192.168.99.254"))
+
+	Modify(name, hostOnlyNetwork.Name, 0)
 
 	m := &Machine{Name: name, ForwardingPort: "52200"}
 	if len(installs) > 0 {
