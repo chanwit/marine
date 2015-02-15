@@ -27,18 +27,23 @@ func prepare(c *cli.Context) {
 
 	exist, err := marine.Exist(name)
 	if exist && force {
-		marine.Remove(name)
+		err = marine.Remove(name)
+		if err != nil {
+			log.Errorf("Remove error before export: %s", err)
+			return
+		}
 	}
 
 	if (err == nil && exist == false) || force {
 		_, err = marine.Import(filename,
 			512,
-			"docker",
-			"golang")
+			"docker", "golang")
 		err = marine.Export(name, outfile)
 		if err != nil {
 			log.Errorf("Export error: %s", err)
+			return
 		}
+		marine.Remove(name)
 	} else {
 		log.Infof("Image existed: %s", name)
 	}
