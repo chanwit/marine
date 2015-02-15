@@ -4,6 +4,7 @@ import (
 	"os"
 	"path"
 	"strings"
+	"time"
 
 	log "github.com/Sirupsen/logrus"
 	"github.com/chanwit/marine"
@@ -45,6 +46,7 @@ func prepare(c *cli.Context) {
 			return
 		}
 		if !keep {
+			time.Sleep(1 * time.Second)
 			err = marine.Remove(name)
 			if err != nil {
 				log.Errorf("Remove error after exported: %s", err)
@@ -65,14 +67,14 @@ var flForce = cli.BoolFlag{
 	Usage: "force action",
 }
 
-var flOutfile = cli.StringFlag {
-	Name: "out, o",
+var flOutfile = cli.StringFlag{
+	Name:  "out, o",
 	Usage: "output image file",
 	Value: "",
 }
 
-var flKeep = cli.BoolFlag {
-	Name: "keep, k",
+var flKeep = cli.BoolFlag{
+	Name:  "keep, k",
 	Usage: "keep VM after exported",
 }
 
