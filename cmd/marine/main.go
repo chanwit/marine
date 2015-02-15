@@ -18,21 +18,28 @@ func prepare(c *cli.Context) {
 	basename := path.Base(filename)
 	name := strings.SplitN(basename, "-", 2)[0]
 
+	force := c.Bool("force")
+
 	// TODO override deletion with -f
 	exist, err := marine.Exist(name)
-	if err == nil && exist == false {
+	if (err == nil && exist == false) || force {
 		_, err = marine.Import(filename,
 			512,
 			"docker",
 			"golang")
 	} else {
-		log.Info("Image existd: %s", name)
+		log.Infof("Image existed: %s", name)
 	}
 }
 
 var flImage = cli.StringFlag{
 	Name:  "image, i",
 	Usage: "image file name <.ova>",
+}
+
+var flForce = cli.BoolFlag{
+	Name:  "force, f",
+	Usage: "force action",
 }
 
 func main() {
@@ -51,7 +58,7 @@ func main() {
 			ShortName: "p",
 			Usage:     "prepare a base image",
 			Flags: []cli.Flag{
-				flImage,
+				flImage, flForce,
 			},
 			Action: prepare,
 		},
