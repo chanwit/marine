@@ -3,6 +3,7 @@ package marine
 import (
 	"fmt"
 	"net"
+	"os"
 	"os/exec"
 	"path"
 	"strings"
@@ -43,6 +44,11 @@ func Export(name string, outfile string) error {
 }
 
 func Import(file string, memory int, installs ...string) (*Machine, error) {
+	if _, err := os.Stat(file); err != nil {
+		log.Error("File not found")
+		return nil, fmt.Errorf("File %s not found", file)
+	}
+
 	basename := path.Base(file)
 	name := strings.SplitN(basename, "-", 2)[0]
 	cmd := exec.Command(VBOX_MANAGE, "import", file,
