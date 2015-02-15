@@ -24,6 +24,7 @@ func prepare(c *cli.Context) {
 	}
 
 	force := c.Bool("force")
+	keep := c.Bool("keep")
 
 	exist, err := marine.Exist(name)
 	if exist && force {
@@ -43,7 +44,12 @@ func prepare(c *cli.Context) {
 			log.Errorf("Export error: %s", err)
 			return
 		}
-		marine.Remove(name)
+		if !keep {
+			err = marine.Remove(name)
+			if err != nil {
+				log.Errorf("Remove error after exported: %s", err)
+			}
+		}
 	} else {
 		log.Infof("Image existed: %s", name)
 	}
@@ -65,6 +71,11 @@ var flOutfile = cli.StringFlag {
 	Value: "",
 }
 
+var flKeep = cli.BoolFlag {
+	Name: "keep, k",
+	Usage: "keep VM after exported",
+}
+
 func main() {
 
 	app := cli.NewApp()
@@ -81,7 +92,7 @@ func main() {
 			ShortName: "p",
 			Usage:     "prepare a base image",
 			Flags: []cli.Flag{
-				flImage, flForce, flOutfile,
+				flImage, flForce, flOutfile, flKeep,
 			},
 			Action: prepare,
 		},
