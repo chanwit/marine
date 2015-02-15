@@ -20,8 +20,11 @@ func prepare(c *cli.Context) {
 
 	force := c.Bool("force")
 
-	// TODO override deletion with -f
 	exist, err := marine.Exist(name)
+	if exist && force {
+		marine.Remove(name)
+	}
+
 	if (err == nil && exist == false) || force {
 		_, err = marine.Import(filename,
 			512,
