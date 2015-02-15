@@ -25,8 +25,9 @@ func prepare(c *cli.Context) {
 			512,
 			"docker",
 			"golang")
+	} else {
+		log.Info("Image existd: %s", name)
 	}
-
 }
 
 var flImage = cli.StringFlag{
