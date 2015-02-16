@@ -107,15 +107,17 @@ func Modify(name string, adapter string, i int) error {
 	err := exec.Command(VBOX_MANAGE, "modifyvm", name,
 		"--natpf1", "delete", "ssh").Run()
 
-	err = exec.Command(VBOX_MANAGE, "modifyvm", name,
+	out, err := exec.Command(VBOX_MANAGE, "modifyvm", name,
 		"--natpf1", fmt.Sprintf("ssh,tcp,127.0.0.1,%d,,22", 52200+i),
 		"--nic2", "hostonly",
 		"--hostonlyadapter2", adapter,
 		"--cableconnected2", "on",
 		"--nicpromisc2", "allow-vms",
-	).Run()
+	).Output()
 	if err == nil {
 		log.Infof("Modified nic2 for \"%s\"", name)
+	} else {
+		log.Errorf("Error modify nic2 for \"%s\" to %s \n%s", name, adapter, string(out))
 	}
 	return err
 }
