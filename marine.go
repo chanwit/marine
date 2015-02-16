@@ -45,11 +45,11 @@ func Export(name string, outfile string) error {
 
 func getNetworkName() (string, error) {
 	hostOnlyNetwork, err := getOrCreateHostOnlyNetwork(
-		net.ParseIP("192.168.99.1"),
+		net.ParseIP("192.168.123.1"),
 		net.IPv4Mask(255, 255, 255, 0),
-		net.ParseIP("192.168.99.2"),
-		net.ParseIP("192.168.99.100"),
-		net.ParseIP("192.168.99.254"))
+		net.ParseIP("192.168.123.2"),
+		net.ParseIP("192.168.123.100"),
+		net.ParseIP("192.168.123.254"))
 	if err != nil {
 		return hostOnlyNetwork.Name, nil
 	}
