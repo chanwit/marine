@@ -17,7 +17,12 @@ type Machine struct {
 }
 
 func (m *Machine) CloneN(num int, prefix string) ([]*Machine, error) {
-	err := Clone(m.Name, prefix, num, getNetworkName())
+	networkName, err := getNetworkName()
+	if err != nil {
+		return nil, err
+	}
+
+	err = Clone(m.Name, prefix, num, networkName)
 	if err != nil {
 		return nil, err
 	}
