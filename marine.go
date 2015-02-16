@@ -44,17 +44,13 @@ func Export(name string, outfile string) error {
 }
 
 func getNetworkName() (string, error) {
-	hostOnlyNetwork, err := getOrCreateHostOnlyNetwork(
+	hostOnlyNetwork, _ := getOrCreateHostOnlyNetwork(
 		net.ParseIP("192.168.123.1"),
 		net.IPv4Mask(255, 255, 255, 0),
 		net.ParseIP("192.168.123.2"),
 		net.ParseIP("192.168.123.100"),
 		net.ParseIP("192.168.123.254"))
-	if err != nil {
-		return hostOnlyNetwork.Name, nil
-	}
-
-	return "", err
+	return hostOnlyNetwork.Name, nil
 }
 
 func Import(file string, memory int, installs ...string) (*Machine, error) {
@@ -81,7 +77,6 @@ func Import(file string, memory int, installs ...string) (*Machine, error) {
 	networkName, err := getNetworkName()
 	if err != nil {
 		log.Errorf("Import: network not found: %s", err)
-		return nil, err
 	}
 	Modify(name, networkName, 0)
 
