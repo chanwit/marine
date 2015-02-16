@@ -94,7 +94,7 @@ To clone the above image and prepare 4 VMs, we can call the following command.
 	boxes, err := ubuntu.CloneN(4, "box")
 ```
 
-Please note that all VMs will share a `host-only` network named `vboxnet0`.
+Please note that all VMs will share an auto-config `host-only` network.
 We'll have `box001`, `box002`, `box003` and `box004` if the command runs successfully.
 
 Each node will have its own port-forwarding. VM `box001` can be connected via `127.0.0.1:52201` and so on.

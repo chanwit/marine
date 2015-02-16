@@ -15,7 +15,7 @@ func TestSudo(t *testing.T) {
 	log.Info("Start testing")
 	_, err := Import(os.Getenv("GOPATH")+"/files/ubuntu-14.10-server-amd64.ova", 512)
 	assert.NoError(t, err)
-	assert.NoError(t, Clone("base", "box", 4, "vboxnet0"))
+	assert.NoError(t, Clone("base", "box", 4, getNetworkName()))
 	StartAndWait("box001", "52201")
 	defer func() {
 		Stop("box001")

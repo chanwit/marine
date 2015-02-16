@@ -17,7 +17,7 @@ type Machine struct {
 }
 
 func (m *Machine) CloneN(num int, prefix string) ([]*Machine, error) {
-	err := Clone(m.Name, prefix, num, "vboxnet0")
+	err := Clone(m.Name, prefix, num, getNetworkName())
 	if err != nil {
 		return nil, err
 	}

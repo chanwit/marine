@@ -43,6 +43,20 @@ func Export(name string, outfile string) error {
 	return err
 }
 
+func getNetworkName() (string, err) {
+	hostOnlyNetwork, err := getOrCreateHostOnlyNetwork(
+		net.ParseIP("192.168.99.1"),
+		net.IPv4Mask(255, 255, 255, 0),
+		net.ParseIP("192.168.99.2"),
+		net.ParseIP("192.168.99.100"),
+		net.ParseIP("192.168.99.254"))
+	if err != nil {
+		return hostOnlyNetwork.Name, nil
+	}
+
+	return "", err
+}
+
 func Import(file string, memory int, installs ...string) (*Machine, error) {
 	if _, err := os.Stat(file); err != nil {
 		log.Error("File not found")
@@ -64,14 +78,7 @@ func Import(file string, memory int, installs ...string) (*Machine, error) {
 		return nil, err
 	}
 
-	hostOnlyNetwork, err := getOrCreateHostOnlyNetwork(
-		net.ParseIP("192.168.99.1"),
-		net.IPv4Mask(255, 255, 255, 0),
-		net.ParseIP("192.168.99.2"),
-		net.ParseIP("192.168.99.100"),
-		net.ParseIP("192.168.99.254"))
-
-	Modify(name, hostOnlyNetwork.Name, 0)
+	Modify(name, getNetworkName(), 0)
 
 	m := &Machine{Name: name, ForwardingPort: "52200"}
 	if len(installs) > 0 {
